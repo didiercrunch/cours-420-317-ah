@@ -1,3 +1,5 @@
+// https://gist.github.com/didiercrunch/f605ec5bdb034f3eb2acd3cf0b858895
+
 // @deno-types="npm:@types/express@4"
 import express, {Response, Request} from "npm:express@4";
 import bodyParser from "npm:body-parser@1.20.2";
@@ -7,14 +9,14 @@ const app = express()
 app.use(bodyParser.json());
 
 
-type Book = {
+export type Book = {
     isbn: string,
     author: string,
     title: string,
     publicationYear: number,
 }
 
-const library : Book[] = [];
+const library_server : Book[] = [];
 
 function bookAlreadyExists(book: Book, library: Book[]): boolean{
     for(const bookInLibrary of library){
@@ -33,13 +35,22 @@ function isValidBook(maybeBook: any){
         && "publicationYear" in maybeBook;
 }
 
+function getBookByIsbn(isbn: string, library: Book[]): Book | null {
+    for(const bookInLibrary of library){
+        if(bookInLibrary.isbn === isbn){
+            return bookInLibrary;
+        }
+    }
+    return null;
+}
+
 app.get("/ping", (req: Request, res: Response): void => {
     res.send("pongi");
 })
 
 app.get("/books", (req: Request, res: Response): void => {
     const books = [];
-    for(const book of library){
+    for(const book of library_server){
         books.push({isbn: book.isbn});
     }
     const ret = {
@@ -48,15 +59,26 @@ app.get("/books", (req: Request, res: Response): void => {
     res.send(ret);
 });
 
+app.get("/books/:isbn", (req: Request, res: Response): void => {
+    const isbn = req.params.isbn;
+    const book = getBookByIsbn(isbn, library_server);
+    if(book === null){
+        res.status(404);
+        res.send({});
+        return
+    }
+    res.send(book);
+});
+
 app.post("/books", (req: Request, res: Response): void => {
     const book = req.body;
-    if(!isValidBook(book) || bookAlreadyExists(book, library)){
+    if(!isValidBook(book) || bookAlreadyExists(book, library_server)){
         res.status(400);
         res.send({})
         return;
     }
 
-    library.push(book);
+    library_server.push(book);
     res.send(book);
 });
 

@@ -1,3 +1,6 @@
+// https://gist.github.com/didiercrunch/8fbe1e26595e41817c92bed4efc44bcd
+import {Book} from "./library_server.ts"
+
 async function getPing(): Promise<void> {
     const resp = await fetch("http://localhost:3000/ping")
     const text = await resp.text()
@@ -12,8 +15,8 @@ function extractIsbn(rawResponse: any): string[]{
     return ret;
 }
 
-async function getAllIsbn(){
-    const resp = await fetch("http://localhost:3000/books")
+async function getAllIsbn(): Promise<string[]>{
+    const resp = await fetch("http://localhost:3000/books");
     const ret = await resp.json();
     return extractIsbn(ret);
 
@@ -42,9 +45,20 @@ async function createFourBooks(): Promise<void>{
     await createBook("3333", "jk rolling", "harry potter IV", 2007);
 }
 
-async function getCreateBook(): Promise<void> {
-    await createFourBooks();
-    console.log(await getAllIsbn());
+async function getBook(isbn: string): Promise<Book>{
+    const url = "http://localhost:3000/books/" + isbn;
+    const resp = await fetch(url);
+    const ret = await resp.json();
+    return ret;
+
 }
 
-await getCreateBook();
+async function petitTest(): Promise<void> {
+    await createFourBooks();
+    const isbns = await getAllIsbn();
+    for(const isbn of isbns){
+        console.log(await getBook(isbn));
+    }
+}
+
+await petitTest();
