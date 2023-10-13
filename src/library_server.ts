@@ -16,6 +16,10 @@ export type Book = {
     publicationYear: number,
 }
 
+type BookQuery = {
+    author?: string
+}
+
 const library_server : Book[] = [];
 
 function bookAlreadyExists(book: Book, library: Book[]): boolean{
@@ -44,14 +48,24 @@ function getBookByIsbn(isbn: string, library: Book[]): Book | null {
     return null;
 }
 
+function matches(book: Book, query: BookQuery){
+    if(!query.author){
+        return true;
+    }
+    return book.author === query.author;
+}
+
 app.get("/ping", (req: Request, res: Response): void => {
     res.send("pongi");
 })
 
 app.get("/books", (req: Request, res: Response): void => {
     const books = [];
+    const query = req.query as BookQuery;
     for(const book of library_server){
-        books.push({isbn: book.isbn});
+        if(matches(book, query)){
+            books.push({isbn: book.isbn});
+        }
     }
     const ret = {
         "books": books
@@ -87,3 +101,5 @@ const port = 3000
 app.listen(port, (): void => {
     console.log(`Example app listening on port ${port}`)
 })
+
+
